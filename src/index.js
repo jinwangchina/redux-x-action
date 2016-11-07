@@ -1,8 +1,8 @@
-
 export const X_TYPE_ASYNC_STATUS = "X_UPDATE_ASYNC_STATUS";
-export const X_STATE_ASYNC = "x_async_status";
+export const X_STATE_ASYNC = "xAsyncStatus";
 export const X_STATE_VALUE_ASYNC_RUNNING = "x_async_running";
-export const X_STATE_VALUE_ASYNC_DONE = "x_async_done";
+export const X_STATE_VALUE_ASYNC_SUCCESS = "x_async_success";
+export const X_STATE_VALUE_ASYNC_FAILURE = "x_async_failure";
 
 const isXAction = ( action ) => {
     return action.xAction != null;
@@ -30,23 +30,23 @@ const updateAsyncStatus = ( dispatch, asyncStatus ) => {
     dispatch( action );
 };
 
-const handleAsync = ( dispatch, xAction ) => {
+const handleAsync = ( dispatch, action ) => {
+    let xAction = action.xAction;
     if ( typeof xAction.xAsync === 'function' ) {
         updateAsyncStatus( dispatch, xAction.xAsyncRunningAction != null ? xAction.xAsyncRunningAction : X_STATE_VALUE_ASYNC_RUNNING );
         let promise = xAction.xAsync();
         promise.then( ( result ) => {
-            xAction.xData = result;
-            updateAsyncStatus( dispatch, xAction.xAsyncDoneAction != null ? xAction.xAsyncDoneAction : X_STATE_VALUE_ASYNC_DONE );
+            xAction.xStateData = result;
+            updateAsyncStatus( dispatch, xAction.xAsyncSuccessAction != null ? xAction.xAsyncSuccessAction : X_STATE_VALUE_ASYNC_SUCCESS );
             dispatch( action );
         } ).catch( ( error ) => {
-            xAction.xData = error;
-            xAction.xError = true;
-            updateAsyncStatus( dispatch, xAction.xAsyncDoneAction != null ? xAction.xAsyncDoneAction : X_STATE_VALUE_ASYNC_DONE );
-            dispatch( xAction );
+            xAction.xStateData = error;
+            updateAsyncStatus( dispatch, xAction.xAsyncFailureAction != null ? xAction.xAsyncFailureAction : X_STATE_VALUE_ASYNC_FAILURE );
+            dispatch( action );
         } );
     } else {
-        xAction.xData = xAction.xAsync;
-        dispatch( xAction );
+        xAction.xStateData = xAction.xAsync;
+        dispatch( action );
     }
 }
 
@@ -71,24 +71,19 @@ export class XReducer {
     }
 }
 
-export const createXReducer = () => {
-    return new XReducer().create();
-};
+export const createXReducer = ( args ) => new XReducer().create();
 
-const createXActionMiddleware = ( args ) => {
+export const createXMiddleware = ( args ) => {
     return ( store ) => ( next ) => ( action ) => {
         if ( isXAction( action ) ) {
             let xAction = action.xAction;
             if ( xAction.xAsync != null ) {
-                handleAsync( next, xAction );
+                handleAsync( next, action );
             }
         }
         return next( action );
     };
 };
-const reduxXAction = createXActionMiddleware();
-reduxXAction.withExtraArgument = createXActionMiddleware;
-export default reduxXAction;
 
 
 
