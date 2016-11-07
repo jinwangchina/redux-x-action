@@ -78,7 +78,11 @@ store.dispatch(updateState(1000));
 ...
 const mapStateToProps = ( state ) => {
   return {
-    propName: state.xAction.stateName
+    // async result including error 
+    propName: state.xAction.stateName, 
+    // async status: X_STATE_VALUE_ASYNC_RUNNING, X_STATE_VALUE_ASYNC_SUCCESS or X_STATE_VALUE_ASYNC_FAILURE
+    // import { X_STATE_VALUE_ASYNC_RUNNING, X_STATE_VALUE_ASYNC_SUCCESS, X_STATE_VALUE_ASYNC_FAILURE } from 'redux-x-action';
+    propAsyncStatus: state.xAction.xAsyncStatus
   }
 };
 ...
