@@ -5,7 +5,7 @@ A tool helps creating smart (sync or async) redux action.
 ## Installation
 
 ```
-npm install --save redux-thunk
+npm install --save redux-x-action
 ```
 
 Then, to enable Redux X Action:
@@ -90,3 +90,6 @@ const mapStateToProps = ( state ) => {
 
 ## Advanced Usage
 TODO
+
+## License
+Apache-2.0
