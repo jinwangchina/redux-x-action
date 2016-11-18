@@ -36,7 +36,7 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>npm public</id>
+                        <id>npm publish</id>
                         <goals>
                             <goal>npm</goal>
                         </goals>

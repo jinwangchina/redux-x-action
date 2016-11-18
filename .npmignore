@@ -3,4 +3,5 @@
 *.log
 node
 node_modules
-dist
+target
+pom.xml
