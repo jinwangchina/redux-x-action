@@ -1,5 +1,3 @@
-export const X_TYPE_ASYNC_STATUS = "X_UPDATE_ASYNC_STATUS";
-export const X_STATE_ASYNC = "xAsyncStatus";
 export const X_STATE_VALUE_ASYNC_RUNNING = "x_async_running";
 export const X_STATE_VALUE_ASYNC_SUCCESS = "x_async_success";
 export const X_STATE_VALUE_ASYNC_FAILURE = "x_async_failure";
@@ -8,45 +6,29 @@ const isXAction = ( action ) => {
     return action.xAction != null;
 };
 
-const updateAsyncStatus = ( dispatch, asyncStatus ) => {
-    let action = {
-        type: X_TYPE_ASYNC_STATUS
+const updateAsyncResult = ( dispatch, action, asyncStatus, data ) => {
+    action.xAction.xAsyncStateData = {
+        status: asyncStatus,
+        data: data
     };
-    if ( typeof asyncStatus === 'string' ) {
-        action = {
-            ...action,
-            xAction: {
-                xStateName: X_STATE_ASYNC,
-                xStateData: asyncStatus
-            }
-        };
-
-    } else {
-        action = {
-            ...action,
-            ...asyncStatus
-        };
-    }
     dispatch( action );
 };
 
 const handleAsync = ( dispatch, action ) => {
     let xAction = action.xAction;
+    let xAsyncRunningAction = xAction.xAsyncRunningAction != null ? xAction.xAsyncRunningAction : X_STATE_VALUE_ASYNC_RUNNING;
+    let xAsyncSuccessAction = xAction.xAsyncSuccessAction != null ? xAction.xAsyncSuccessAction : X_STATE_VALUE_ASYNC_SUCCESS;
+    let xAsyncFailureAction = xAction.xAsyncFailureAction != null ? xAction.xAsyncFailureAction : X_STATE_VALUE_ASYNC_FAILURE;
+    updateAsyncResult( dispatch, action, xAsyncRunningAction );
     if ( typeof xAction.xAsync === 'function' ) {
-        updateAsyncStatus( dispatch, xAction.xAsyncRunningAction != null ? xAction.xAsyncRunningAction : X_STATE_VALUE_ASYNC_RUNNING );
         let promise = xAction.xAsync();
         promise.then( ( result ) => {
-            xAction.xStateData = result;
-            updateAsyncStatus( dispatch, xAction.xAsyncSuccessAction != null ? xAction.xAsyncSuccessAction : X_STATE_VALUE_ASYNC_SUCCESS );
-            dispatch( action );
+            updateAsyncResult( dispatch, action, xAsyncSuccessAction, result );
         } ).catch( ( error ) => {
-            xAction.xStateData = error;
-            updateAsyncStatus( dispatch, xAction.xAsyncFailureAction != null ? xAction.xAsyncFailureAction : X_STATE_VALUE_ASYNC_FAILURE );
-            dispatch( action );
+            updateAsyncResult( dispatch, action, xAsyncFailureAction, error );
         } );
     } else {
-        xAction.xStateData = xAction.xAsync;
-        dispatch( action );
+        updateAsyncResult( dispatch, action, xAsyncSuccessAction, xAction.xAsync );
     }
 }
 
@@ -55,16 +37,33 @@ export class XReducer {
         return ( state = {}, action = null ) => {
             if ( isXAction( action ) ) {
                 let xAction = action.xAction;
-                let newState = {};
-                if ( typeof xAction.xSync === 'function' ) {
-                    newState = xAction.xSync( state, action );
-                } else if ( xAction.xStateName != null ) {
-                    newState[ xAction.xStateName ] = xAction.xStateData;
+                // handle sync update
+                if ( xAction.xStateData != null ) {
+                    let newState = {}
+                    if ( typeof xAction.xStateData === 'function' ) {
+                        newState = xAction.xSync( state, action );
+                    } else {
+                        newState[ xAction.xStateName ] = xAction.xStateData;
+                    }
+                    return {
+                        ...state,
+                        ...newState
+                    };
                 }
-                return {
-                    ...state,
-                    ...newState
-                };
+                // handle async update
+                if ( xAction.xAsync != null ) {
+                    let newState = {};
+                    if ( typeof xAction.xAsyncStateData.status === 'function' ) {
+                        newState = xAction.xAsyncStateData.status( state, action );
+                    } else {
+                        newState.xAsyncStatus = xAction.xAsyncStateData.status;
+                    }
+                    newState[ xAction.xStateName ] = xAction.xAsyncStateData.data;
+                    return {
+                        ...state,
+                        ...newState
+                    };
+                }
             }
             return state;
         };
