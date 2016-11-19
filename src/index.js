@@ -6,29 +6,36 @@ const isXAction = ( action ) => {
     return action.xAction != null;
 };
 
+const isXActionWithAsync = ( action ) => {
+    return isXAction( action ) && action.xAction.xAsync != null;
+};
+
 const updateAsyncResult = ( dispatch, action, asyncStatus, data ) => {
-    action.xAction.xAsyncStateData = {
-        status: asyncStatus,
-        data: data
+    let newAction = { ...action };
+    newAction.xAction = {
+        xData: {
+            ...asyncStatus,
+        }
     };
-    dispatch( action );
+    newAction.xAction.xData[ action.xAction.xStateName ] = data;
+    dispatch( newAction );
 };
 
 const handleAsync = ( dispatch, action ) => {
     let xAction = action.xAction;
-    let xAsyncRunningAction = xAction.xAsyncRunningAction != null ? xAction.xAsyncRunningAction : X_STATE_VALUE_ASYNC_RUNNING;
-    let xAsyncSuccessAction = xAction.xAsyncSuccessAction != null ? xAction.xAsyncSuccessAction : X_STATE_VALUE_ASYNC_SUCCESS;
-    let xAsyncFailureAction = xAction.xAsyncFailureAction != null ? xAction.xAsyncFailureAction : X_STATE_VALUE_ASYNC_FAILURE;
-    updateAsyncResult( dispatch, action, xAsyncRunningAction );
+    let xAsyncRunning = xAction.xAsyncRunning != null ? xAction.xAsyncRunning : { xAsyncStatus: X_STATE_VALUE_ASYNC_RUNNING };
+    let xAsyncSuccess = xAction.xAsyncSuccess != null ? xAction.xAsyncSuccess : { xAsyncStatus: X_STATE_VALUE_ASYNC_SUCCESS };
+    let xAsyncFailure = xAction.xAsyncFailure != null ? xAction.xAsyncFailure : { xAsyncStatus: X_STATE_VALUE_ASYNC_FAILURE };
+    updateAsyncResult( dispatch, action, xAsyncRunning );
     if ( typeof xAction.xAsync === 'function' ) {
         let promise = xAction.xAsync();
-        promise.then( ( result ) => {
-            updateAsyncResult( dispatch, action, xAsyncSuccessAction, result );
-        } ).catch( ( error ) => {
-            updateAsyncResult( dispatch, action, xAsyncFailureAction, error );
+        promise.then( ( res ) => {
+            updateAsyncResult( dispatch, action, xAsyncSuccess, res );
+        } ).catch( ( err ) => {
+            updateAsyncResult( dispatch, action, xAsyncFailure, err );
         } );
     } else {
-        updateAsyncResult( dispatch, action, xAsyncSuccessAction, xAction.xAsync );
+        updateAsyncResult( dispatch, action, xAsyncSuccess, xAction.xAsync );
     }
 }
 
@@ -37,32 +44,26 @@ export class XReducer {
         return ( state = {}, action = null ) => {
             if ( isXAction( action ) ) {
                 let xAction = action.xAction;
-                // handle sync update
+                let newState = {}
+
+                // handle sync update - xStateData
                 if ( xAction.xStateData != null ) {
-                    let newState = {}
                     if ( typeof xAction.xStateData === 'function' ) {
-                        newState = xAction.xSync( state, action );
+                        newState[ xAction.xStateName ] = xAction.xStateData();
                     } else {
                         newState[ xAction.xStateName ] = xAction.xStateData;
                     }
-                    return {
-                        ...state,
-                        ...newState
-                    };
+                    return { ...state, ...newState };
                 }
-                // handle async update
-                if ( xAction.xAsync != null ) {
-                    let newState = {};
-                    if ( typeof xAction.xAsyncStateData.status === 'function' ) {
-                        newState = xAction.xAsyncStateData.status( state, action );
+
+                // handle sync update - xData
+                if ( xAction.xData != null ) {
+                    if ( typeof xAction.xData === 'function' ) {
+                        newState = xAction.xData( state, action );
                     } else {
-                        newState.xAsyncStatus = xAction.xAsyncStateData.status;
+                        newState = xAction.xData;
                     }
-                    newState[ xAction.xStateName ] = xAction.xAsyncStateData.data;
-                    return {
-                        ...state,
-                        ...newState
-                    };
+                    return { ...state, ...newState };
                 }
             }
             return state;
@@ -70,19 +71,21 @@ export class XReducer {
     }
 }
 
-export const createXReducer = ( args ) => new XReducer().create();
-
-export const createXMiddleware = ( args ) => {
-    return ( store ) => ( next ) => ( action ) => {
-        if ( isXAction( action ) ) {
-            let xAction = action.xAction;
-            if ( xAction.xAsync != null ) {
+export class XMiddleware {
+    create() {
+        return ( store ) => ( next ) => ( action ) => {
+            if ( isXActionWithAsync( action ) ) {
                 handleAsync( next, action );
+                return null;
             }
-        }
-        return next( action );
-    };
-};
+            return next( action );
+        };
+    }
+}
+
+export const createXReducer = args => new XReducer().create();
+
+export const createXMiddleware = args => new XMiddleware().create();
 
 
 

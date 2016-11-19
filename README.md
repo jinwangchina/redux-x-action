@@ -89,7 +89,93 @@ const mapStateToProps = ( state ) => {
 ```
 
 ## Advanced Usage
-TODO
+Update state (Synchronous): 
+```js
+// dispatch
+...
+function updateState(newState) {
+  return {
+    type: 'UPDATE_STATE',
+    xAction: {
+      xData: {
+        stateName: newState
+      }
+    }
+  };
+}
+
+function updateState(newState) {
+  return {
+    type: 'UPDATE_STATE',
+    xAction: {
+      xData: ( state, action ) => {
+        if ( action.type === 'UPDATE_STATE' ) {
+            return {
+                ...state, 
+                stateName: newState
+            };
+        }
+        return state;
+      }
+    }
+  };
+}
+
+store.dispatch(updateState('New State'));
+...
+
+// props mapping
+...
+const mapStateToProps = ( state ) => {
+  return {
+    propName: state.xAction.stateName
+  }
+};
+...
+```
+
+Update state (Asynchronous): 
+```js
+// dispatch
+...
+function updateState(ms) {
+  return {
+    type: 'UPDATE_STATE',
+    xAction: {
+      xStateName: 'stateName',
+      xAsync: () => {
+        let promise = new Promise(resolve => setTimeout(resolve, ms));
+        return promise;
+      },
+      xAsyncRunning: {
+        asyncStatus: 'running'
+      }, 
+      xAsyncSuccess: {
+        asyncStatus: 'success'
+            }, 
+      xAsyncFailure: {
+        asyncStatus: 'failure'
+      }
+    }
+  };
+}
+
+store.dispatch(updateState(1000));
+...
+
+// props mapping
+...
+const mapStateToProps = ( state ) => {
+  return {
+    // async result including error 
+    propName: state.xAction.stateName, 
+    // async status: 'running', 'success' and 'failure' as above
+    propAsyncStatus: state.xAction.asyncStatus
+  }
+};
+...
+```
+
 
 ## License
 Apache-2.0

@@ -36,7 +36,18 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>npm test</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>test</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>npm publish</id>
+                        <phase>install</phase>
                         <goals>
                             <goal>npm</goal>
                         </goals>
