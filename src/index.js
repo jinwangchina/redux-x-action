@@ -28,7 +28,7 @@ const handleAsync = ( dispatch, action ) => {
     let xAsyncFailure = xAction.xAsyncFailure != null ? xAction.xAsyncFailure : { xAsyncStatus: X_STATE_VALUE_ASYNC_FAILURE };
     updateAsyncResult( dispatch, action, xAsyncRunning );
     if ( typeof xAction.xAsync === 'function' ) {
-        let promise = xAction.xAsync();
+        let promise = xAction.xAsync( dispatch );
         promise.then( ( res ) => {
             updateAsyncResult( dispatch, action, xAsyncSuccess, res );
         } ).catch( ( err ) => {

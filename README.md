@@ -143,8 +143,16 @@ function updateState(ms) {
     type: 'UPDATE_STATE',
     xAction: {
       xStateName: 'stateName',
-      xAsync: () => {
-        let promise = new Promise(resolve => setTimeout(resolve, ms));
+      xAsync: dispatch => {
+        let promise = new Promise(resolve => setTimeout(resolve, ms)).then( res => {
+            dispatch( {
+                type: 'ANOTHER_UPDATE_STATE', 
+                xAction: {
+                    xStateName: 'anotherStateName',
+                    xStateData: 'anotherStateData'
+                }
+            } );
+        } );
         return promise;
       },
       xAsyncRunning: {
