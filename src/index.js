@@ -1,3 +1,4 @@
+export const X_STATE_NAME_ASYNC_STATUS = "xAsyncStatus";
 export const X_STATE_VALUE_ASYNC_RUNNING = "x_async_running";
 export const X_STATE_VALUE_ASYNC_SUCCESS = "x_async_success";
 export const X_STATE_VALUE_ASYNC_FAILURE = "x_async_failure";
@@ -10,10 +11,23 @@ const isXActionWithAsync = ( action ) => {
     return isXAction( action ) && action.xAction.xAsync != null;
 };
 
+const createAsyncStatus = ( xAsyncStatusStateName, xAsyncStatusStateValue, xAsyncStatusObject ) => {
+    if ( xAsyncStatusObject != null ) {
+        return xAsyncStatusObject;
+    }
+    if ( xAsyncStatusStateName == null ) {
+        xAsyncStatusStateName = X_STATE_NAME_ASYNC_STATUS;
+    }
+    let xAsyncStatus = {};
+    xAsyncStatus[ xAsyncStatusStateName ] = xAsyncStatusStateValue;
+    return xAsyncStatus;
+};
+
 const updateAsyncResult = ( dispatch, action, asyncStatus, data ) => {
     let newAction = { ...action };
     newAction.xAction = {
         xData: {
+            xAsyncActionType: action.type,
             ...asyncStatus,
         }
     };
@@ -23,9 +37,9 @@ const updateAsyncResult = ( dispatch, action, asyncStatus, data ) => {
 
 const handleAsync = ( dispatch, action ) => {
     let xAction = action.xAction;
-    let xAsyncRunning = xAction.xAsyncRunning != null ? xAction.xAsyncRunning : { xAsyncStatus: X_STATE_VALUE_ASYNC_RUNNING };
-    let xAsyncSuccess = xAction.xAsyncSuccess != null ? xAction.xAsyncSuccess : { xAsyncStatus: X_STATE_VALUE_ASYNC_SUCCESS };
-    let xAsyncFailure = xAction.xAsyncFailure != null ? xAction.xAsyncFailure : { xAsyncStatus: X_STATE_VALUE_ASYNC_FAILURE };
+    let xAsyncRunning = createAsyncStatus( xAction.xAsyncStatusStateName, X_STATE_VALUE_ASYNC_RUNNING, xAction.xAsyncRunning );
+    let xAsyncSuccess = createAsyncStatus( xAction.xAsyncStatusStateName, X_STATE_VALUE_ASYNC_SUCCESS, xAction.xAsyncSuccess );
+    let xAsyncFailure = createAsyncStatus( xAction.xAsyncStatusStateName, X_STATE_VALUE_ASYNC_FAILURE, xAction.xAsyncFailure );
     updateAsyncResult( dispatch, action, xAsyncRunning );
     if ( typeof xAction.xAsync === 'function' ) {
         let promise = xAction.xAsync( dispatch );
@@ -37,7 +51,7 @@ const handleAsync = ( dispatch, action ) => {
     } else {
         updateAsyncResult( dispatch, action, xAsyncSuccess, xAction.xAsync );
     }
-}
+};
 
 export class XReducer {
     create() {

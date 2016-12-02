@@ -17,7 +17,7 @@ import { createXMiddleware, createXReducer } from 'redux-x-action';
 // Note: this API requires redux@>=3.1.0
 const store = createStore(
   combineReducers( {
-    xAction: createXReducer()
+    xReducer: createXReducer()
   } ),
   applyMiddleware( 
     createXMiddleware() 
@@ -46,9 +46,10 @@ store.dispatch(updateState('New State'));
 
 // props mapping
 ...
-const mapStateToProps = ( state ) => {
+const mapStateToProps = state => {
   return {
-    propName: state.xAction.stateName
+    // 'New State'
+    propName: state.xReducer.stateName
   }
 };
 ...
@@ -58,31 +59,33 @@ Update state (Asynchronous):
 ```js
 // dispatch
 ...
-function updateState(ms) {
+function updateState(newState) {
   return {
     type: 'UPDATE_STATE',
     xAction: {
       xStateName: 'stateName',
       xAsync: () => {
-        let promise = new Promise(resolve => setTimeout(resolve, ms));
+        let promise = new Promise(resolve => setTimeout(() => resolve(newState), 1000));
         return promise;
       }
     }
   };
 }
 
-store.dispatch(updateState(1000));
+store.dispatch(updateState('New State'));
 ...
 
 // props mapping
 ...
 const mapStateToProps = ( state ) => {
   return {
-    // async result including error 
-    propName: state.xAction.stateName, 
+    // success: 'New State', failure: error object 
+    propName: state.xReducer.stateName, 
     // async status: X_STATE_VALUE_ASYNC_RUNNING, X_STATE_VALUE_ASYNC_SUCCESS or X_STATE_VALUE_ASYNC_FAILURE
     // import { X_STATE_VALUE_ASYNC_RUNNING, X_STATE_VALUE_ASYNC_SUCCESS, X_STATE_VALUE_ASYNC_FAILURE } from 'redux-x-action';
-    propAsyncStatus: state.xAction.xAsyncStatus
+    propAsyncStatus: state.xReducer.xAsyncStatus, 
+    // 'UPDATE_STATE'
+    propAsyncType: state.xReducer.xAsyncType
   }
 };
 ...
@@ -103,6 +106,8 @@ function updateState(newState) {
     }
   };
 }
+
+or 
 
 function updateState(newState) {
   return {
@@ -128,7 +133,8 @@ store.dispatch(updateState('New State'));
 ...
 const mapStateToProps = ( state ) => {
   return {
-    propName: state.xAction.stateName
+    // 'New State'
+    propName: state.xReducer.stateName
   }
 };
 ...
@@ -138,13 +144,30 @@ Update state (Asynchronous):
 ```js
 // dispatch
 ...
-function updateState(ms) {
+function updateState(newState) {
   return {
     type: 'UPDATE_STATE',
     xAction: {
       xStateName: 'stateName',
       xAsync: dispatch => {
-        let promise = new Promise(resolve => setTimeout(resolve, ms)).then( res => {
+        let promise = new Promise(resolve => setTimeout(() => resolve(newState), 1000));
+        return promise;
+      },
+      xAsyncStatusStateName: 'asyncStatus'
+    }
+  };
+}
+
+or 
+
+function updateState(newState) {
+  return {
+    type: 'UPDATE_STATE',
+    xAction: {
+      xStateName: 'stateName',
+      xAsync: dispatch => {
+        let promise = new Promise(resolve => setTimeout(() => resolve(newState), 1000)).then( res => {
+            // do another dispatch
             dispatch( {
                 type: 'ANOTHER_UPDATE_STATE', 
                 xAction: {
@@ -168,14 +191,14 @@ function updateState(ms) {
   };
 }
 
-store.dispatch(updateState(1000));
+store.dispatch(updateState('New State'));
 ...
 
 // props mapping
 ...
 const mapStateToProps = ( state ) => {
   return {
-    // async result including error 
+    // success: 'New State', failure: error object 
     propName: state.xAction.stateName, 
     // async status: 'running', 'success' and 'failure' as above
     propAsyncStatus: state.xAction.asyncStatus
