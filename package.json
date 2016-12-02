@@ -1,6 +1,6 @@
 {
   "name": "redux-x-action",
-  "version": "0.2.10",
+  "version": "0.2.11",
   "description": "A tool helps creating smart (sync or async) redux action.",
   "main": "dist/index.js",
   "scripts": {

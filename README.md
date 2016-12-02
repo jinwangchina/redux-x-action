@@ -199,9 +199,9 @@ store.dispatch(updateState('New State'));
 const mapStateToProps = ( state ) => {
   return {
     // success: 'New State', failure: error object 
-    propName: state.xAction.stateName, 
+    propName: state.xReducer.stateName, 
     // async status: 'running', 'success' and 'failure' as above
-    propAsyncStatus: state.xAction.asyncStatus
+    propAsyncStatus: state.xReducer.asyncStatus
   }
 };
 ...
