@@ -1,4 +1,5 @@
 export const X_STATE_NAME_ASYNC_STATUS = "xAsyncStatus";
+export const X_STATE_NAME_ASYNC_ERROR = "xAsyncError";
 export const X_STATE_VALUE_ASYNC_RUNNING = "x_async_running";
 export const X_STATE_VALUE_ASYNC_SUCCESS = "x_async_success";
 export const X_STATE_VALUE_ASYNC_FAILURE = "x_async_failure";
@@ -23,7 +24,7 @@ const createAsyncStatus = ( xAsyncStatusStateName, xAsyncStatusStateValue, xAsyn
     return xAsyncStatus;
 };
 
-const updateAsyncResult = ( dispatch, action, asyncStatus, data ) => {
+const updateAsyncResult = ( dispatch, action, asyncStatus, result, error ) => {
     let newAction = { ...action };
     newAction.xAction = {
         xData: {
@@ -31,7 +32,8 @@ const updateAsyncResult = ( dispatch, action, asyncStatus, data ) => {
             ...asyncStatus,
         }
     };
-    newAction.xAction.xData[ action.xAction.xStateName ] = data;
+    newAction.xAction.xData[ action.xAction.xStateName ] = result;
+    newAction.xAction.xData[ action.xAction.xAsyncErrorStateName != null ? action.xAction.xAsyncErrorStateName : X_STATE_NAME_ASYNC_ERROR ] = error;
     dispatch( newAction );
 };
 
@@ -44,12 +46,12 @@ const handleAsync = ( dispatch, action ) => {
     if ( typeof xAction.xAsync === 'function' ) {
         let promise = xAction.xAsync( dispatch );
         promise.then( ( res ) => {
-            updateAsyncResult( dispatch, action, xAsyncSuccess, res );
+            updateAsyncResult( dispatch, action, xAsyncSuccess, res, undefined );
         } ).catch( ( err ) => {
-            updateAsyncResult( dispatch, action, xAsyncFailure, err );
+            updateAsyncResult( dispatch, action, xAsyncFailure, undefined, err );
         } );
     } else {
-        updateAsyncResult( dispatch, action, xAsyncSuccess, xAction.xAsync );
+        updateAsyncResult( dispatch, action, xAsyncSuccess, xAction.xAsync, undefined );
     }
 };
 

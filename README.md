@@ -79,8 +79,10 @@ store.dispatch(updateState('New State'));
 ...
 const mapStateToProps = ( state ) => {
   return {
-    // success: 'New State', failure: error object 
+    // success: 'New State', failure: undefined 
     propName: state.xReducer.stateName, 
+    // success: undefined, failure: error object 
+    propAsyncError: state.xReducer.xAsyncError, 
     // async status: X_STATE_VALUE_ASYNC_RUNNING, X_STATE_VALUE_ASYNC_SUCCESS or X_STATE_VALUE_ASYNC_FAILURE
     // import { X_STATE_VALUE_ASYNC_RUNNING, X_STATE_VALUE_ASYNC_SUCCESS, X_STATE_VALUE_ASYNC_FAILURE } from 'redux-x-action';
     propAsyncStatus: state.xReducer.xAsyncStatus, 
@@ -153,7 +155,8 @@ function updateState(newState) {
         let promise = new Promise(resolve => setTimeout(() => resolve(newState), 1000));
         return promise;
       },
-      xAsyncStatusStateName: 'asyncStatus'
+      xAsyncStatusStateName: 'asyncStatus', 
+      xAsyncErrorStateName: 'asyncError'
     }
   };
 }
@@ -186,7 +189,8 @@ function updateState(newState) {
             }, 
       xAsyncFailure: {
         asyncStatus: 'failure'
-      }
+      }, 
+      xAsyncErrorStateName: 'asyncError'
     }
   };
 }
@@ -198,8 +202,10 @@ store.dispatch(updateState('New State'));
 ...
 const mapStateToProps = ( state ) => {
   return {
-    // success: 'New State', failure: error object 
+    // success: 'New State', failure: undefined 
     propName: state.xReducer.stateName, 
+    // success: undefined, failure: error object 
+    propAsyncError: state.xReducer.asyncError, 
     // async status: 'running', 'success' and 'failure' as above
     propAsyncStatus: state.xReducer.asyncStatus
   }
